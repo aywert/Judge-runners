@@ -4,14 +4,14 @@ CC = gcc
 CFLAGS = -Wall -Wextra
 
 NAMEEXE := main
-OBJFILES := main.o
+OBJFILES := main.o runners_jundge.o
 
 all: $(NAMEEXE)
 
 run: $(NAMEEXE)
 	./$(NAMEEXE)
 
-$(NAMEEXE) : $(OBJFILES)
+$(NAMEEXE) : $(OBJFILES) runners_jundge.h
 	$(CC) $(OBJFILES) -o $@ 
 
 %.o : %.c
