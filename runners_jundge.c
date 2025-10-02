@@ -1,6 +1,4 @@
-#include "runners_jundge.h"
-
-//#define MSG_SEND(mtype, msg) buf.mtype = mtype; buf.msg = msg; msgsnd(queue_id, &buf, sizeof(int), 0);
+#include "runners_jundge.h"                                                                        \
 
 int jundge(int queue_id, int N)
 {
@@ -8,8 +6,7 @@ int jundge(int queue_id, int N)
 
   for (int i = 0; i < N; i++)
   {
-    int n = msgrcv(queue_id, &buf, sizeof(int), N+1, 0);
-    if (n == -1)
+    if (msgrcv(queue_id, &buf, sizeof(int), N+1, 0) == -1)
     {
       fprintf(stderr, "msgrcv4: %s\n", strerror(errno));
       exit(1);
@@ -18,9 +15,10 @@ int jundge(int queue_id, int N)
     printf("Judge: runner %d is ready\n", buf.msg);
   }
 
+  printf("Judge: Great! Everyone is ready! Start!\n");
+
   buf.mtype = 1;
   buf.msg = start_msg;
-  printf("Jundge: Great! Everyone is ready! Start!\n");
   msgsnd(queue_id, &buf, sizeof(int), 0);
   
   if (msgrcv(queue_id, &buf, sizeof(int), N+1, 0) == -1)
@@ -29,7 +27,7 @@ int jundge(int queue_id, int N)
     exit(1);
   }
 
-  printf("Jundge: race is over!\n");
+  printf("Judge: race is over!\n");
   
 
   return 0;
@@ -41,7 +39,7 @@ int runner(int runner_n, int queue_id, int N)
   buf.mtype = N+1; // N+1 responds for jundge
   buf.msg = runner_n;
   
-  printf("i am runner number %d sending msg with N+1 type\n", runner_n);
+  printf("runner %d: I'm ready!\n", runner_n);
   msgsnd(queue_id, &buf, sizeof(int), 0);
 
   if (msgrcv(queue_id, &buf, sizeof(int), runner_n, 0) == -1) 
@@ -55,7 +53,7 @@ int runner(int runner_n, int queue_id, int N)
     buf.mtype = runner_n+1;
     buf.msg = start_msg;
     for (int i = 0; i < N; i++) printf("runner_n = %d\n", runner_n);
-    printf("runner: i am %d giving estapheta to next runner!\n", runner_n);
+    printf("runner %d: giving estapheta to next runner!\n", runner_n);
     msgsnd(queue_id, &buf, sizeof(int), 0);
   }
 
@@ -63,7 +61,7 @@ int runner(int runner_n, int queue_id, int N)
   {
     buf.mtype = N+1;
     buf.msg = start_msg;
-    printf("runner: i am %d. Hey jundge, my team is finished!\n", runner_n);
+    printf("runner %d: Hey jundge, my team is finished!\n", runner_n);
     msgsnd(queue_id, &buf, sizeof(int), 0);
   }
 
