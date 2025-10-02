@@ -49,6 +49,7 @@ int main(void)
   }
 
   jundge(&My_st, queue_id, &buf, N);
+
   msgctl(queue_id, IPC_RMID, &My_st);
 
   return 0;
@@ -62,25 +63,24 @@ int jundge(struct msqid_ds* My_st, int queue_id, struct msgbuf* buf, int N)
     if (n == -1)
     {
       fprintf(stderr, "msgrcv: %s\n", strerror(errno));
-      //exit(1);
+      exit(1);
     }
 
-    //printf("n read = %d\n", n);
     printf("Judge: runner %d is ready\n", buf->msg);
   }
 
-  //buf->mtype = 1;
-  //buf->msg = start_msg;
-  //printf("Jundge: Great! Everyone is ready! Start!\n");
-  // msgsnd(queue_id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  buf->mtype = 1;
+  buf->msg = start_msg;
+  printf("Jundge: Great! Everyone is ready! Start!\n");
+  msgsnd(queue_id, buf, sizeof(int), 0);
   
-  // for (int i = 0; i < N; i++)
-  // {
-  //   while(msgrcv(queue_id, &buf, sizeof(int), 1, IPC_NOWAIT) == 0); // 1 responds for jundge
-  //   printf("Judge: runner %d finished the race!\n", buf->msg);
-  // }
+  if (msgrcv(queue_id, buf, sizeof(int), N+1, 0) == -1)
+  {
+    fprintf(stderr, "msgrcv: %s\n", strerror(errno));
+    exit(1);
+  }
 
-  // printf("Judge: race is over\n");
+  printf("Race is over!\n");
   
 
   return 0;
@@ -88,18 +88,32 @@ int jundge(struct msqid_ds* My_st, int queue_id, struct msgbuf* buf, int N)
 
 int runner(int runner_n, int id, struct msgbuf* buf)
 {
-  //printf("i am runnher number %d sending msg with N+1 type", runner_n);
-  buf->mtype = N+1; // respond for jundge
+  buf->mtype = N+1; // Т+1 responds for jundge
   buf->msg = runner_n;
-  //printf("runner = %d\n", runner_n-1);
-  printf("i am runnher number %d sending msg with N+1 type\n", runner_n);
+  
+  printf("i am runner number %d sending msg with N+1 type\n", runner_n);
   msgsnd(id, buf, sizeof(int), 0);
 
-  //while(msgrcv(id, &buf, sizeof(int), runner_n, IPC_NOWAIT) == 0);
-  
-  // buf->mtype = 1;
-  // buf->msg = runner_n-1;
-  // msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  if (msgrcv(id, buf, sizeof(int), runner_n, 0) == -1) 
+  {
+    fprintf(stderr, "msgrcv: %s\n", strerror(errno));
+    exit(1); 
+  }
+
+  if (runner_n < N)
+  {
+    buf->mtype = runner_n+1;
+    printf("runner: i am %d giving estapheta to next runner!\n", runner_n);
+    for (int i = 0; i < N; i++) printf("runner_n = %d\n", runner_n);
+    msgsnd(id, buf, sizeof(int), 0);
+  }
+
+  else 
+  {
+    buf->mtype = N+1;
+    printf("runner: i am %d. Hey jundge, my team is finished!\n", runner_n);
+    msgsnd(id, buf, sizeof(int), 0);
+  }
 
   // buf->mtype = runner_n+1;
   // printf("runner: i am %d giving estapheta to next runner\n", runner_n-1);
