@@ -19,8 +19,8 @@ static int N = 5;
 enum message
 {
   no_msg = 0,
-  start_msg = 10, 
-  ready = -1,
+  start_msg = -1, 
+  ready = -2,
 };
 
 
@@ -43,7 +43,7 @@ int main(void)
 
     if (pid == 0)
     {
-      runner(i+2, queue_id, &buf);
+      runner(i+1, queue_id, &buf);
       return 0;
     }
   }
@@ -58,22 +58,29 @@ int jundge(struct msqid_ds* My_st, int queue_id, struct msgbuf* buf, int N)
 {
   for (int i = 0; i < N; i++)
   {
-    while(msgrcv(queue_id, &buf, sizeof(int), i+2, IPC_NOWAIT) == 0);
-    //printf("Judge: runner %d is ready\n", buf->msg);
+    int n = msgrcv(queue_id, buf, sizeof(int), N+1, 0);
+    if (n == -1)
+    {
+      fprintf(stderr, "msgrcv: %s\n", strerror(errno));
+      //exit(1);
+    }
+
+    //printf("n read = %d\n", n);
+    printf("Judge: runner %d is ready\n", buf->msg);
   }
 
-  buf->mtype = 1;
-  buf->msg = start_msg;
-  printf("Jundge: Great! Everyone is ready! Start!\n");
-  msgsnd(queue_id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  //buf->mtype = 1;
+  //buf->msg = start_msg;
+  //printf("Jundge: Great! Everyone is ready! Start!\n");
+  // msgsnd(queue_id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
   
-  for (int i = 0; i < N; i++)
-  {
-    while(msgrcv(queue_id, &buf, sizeof(int), 1, IPC_NOWAIT) == 0); // 1 responds for jundge
-    printf("Judge: runner %d finished the race!\n", buf->msg);
-  }
+  // for (int i = 0; i < N; i++)
+  // {
+  //   while(msgrcv(queue_id, &buf, sizeof(int), 1, IPC_NOWAIT) == 0); // 1 responds for jundge
+  //   printf("Judge: runner %d finished the race!\n", buf->msg);
+  // }
 
-  printf("Judge: race is over\n");
+  // printf("Judge: race is over\n");
   
 
   return 0;
@@ -81,19 +88,21 @@ int jundge(struct msqid_ds* My_st, int queue_id, struct msgbuf* buf, int N)
 
 int runner(int runner_n, int id, struct msgbuf* buf)
 {
-  buf->mtype = 1; // respond for jundge
+  //printf("i am runnher number %d sending msg with N+1 type", runner_n);
+  buf->mtype = N+1; // respond for jundge
   buf->msg = runner_n;
   //printf("runner = %d\n", runner_n-1);
-  msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  printf("i am runnher number %d sending msg with N+1 type\n", runner_n);
+  msgsnd(id, buf, sizeof(int), 0);
 
-  while(msgrcv(id, &buf, sizeof(int), runner_n, IPC_NOWAIT) == 0);
+  //while(msgrcv(id, &buf, sizeof(int), runner_n, IPC_NOWAIT) == 0);
   
-  buf->mtype = 1;
-  buf->msg = runner_n-1;
-  msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  // buf->mtype = 1;
+  // buf->msg = runner_n-1;
+  // msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
 
-  buf->mtype = runner_n+1;
-  printf("runner: i am %d giving estapheta to next runner\n", runner_n-1);
-  msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
+  // buf->mtype = runner_n+1;
+  // printf("runner: i am %d giving estapheta to next runner\n", runner_n-1);
+  // msgsnd(id, &buf, sizeof(struct msgbuf) - sizeof(long), IPC_NOWAIT);
   return 0;
 }
