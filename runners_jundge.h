@@ -20,6 +20,6 @@ struct msgbuf {
 
 
 int runner(int runner_n, int id, int N);
-int jundge(int queue_id, int N);
+int judge(int queue_id, int N);
 int create_queue(int msgflg);
 void init_runners(int queue_id, int N);

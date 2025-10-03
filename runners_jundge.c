@@ -1,6 +1,6 @@
 #include "runners_jundge.h"                                                                        \
 
-int jundge(int queue_id, int N)
+int judge(int queue_id, int N)
 {
   struct msgbuf buf = {0, no_msg};
 
