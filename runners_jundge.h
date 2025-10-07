@@ -6,18 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum message
-{
-  no_msg = 0,
-  start_msg = -1, 
-  ready = -2,
+enum message_type {
+  NO_MSG = 0,
+  START_MSG = -1, 
+  READY_MSG = -2,
 };
 
 struct msgbuf {
   long mtype;       /* message type, must be > 0 */
-  int msg;    /* message data */
+  int  msg;    /* message data */
 };
 
+#define FAILURE_STATUS -1
+#define SUCCESS_STATUS 1
 
 int runner(int runner_n, int id, int N);
 int judge(int queue_id, int N);
